@@ -61,6 +61,21 @@ async function rebuild() {
     const stats = fs.statSync(INDEX_PATH);
     console.log(`   Index size: ${(stats.size / 1024 / 1024).toFixed(2)} MB`);
   }
+  
+  // Post-install guidance
+  console.log('');
+  console.log('─'.repeat(50));
+  console.log('📋 SETUP TIPS:');
+  console.log('');
+  console.log('1. Add to your AGENTS.md (recommended):');
+  console.log('   "When asked about OpenClaw, search docs first:');
+  console.log('    node ~/.openclaw/skills/search-openclaw-docs/scripts/docs-search.js query"');
+  console.log('');
+  console.log('2. Test it:');
+  console.log('   node ~/.openclaw/skills/search-openclaw-docs/scripts/docs-search.js "discord"');
+  console.log('');
+  console.log('Full setup guide: ~/.openclaw/skills/search-openclaw-docs/POST_INSTALL.md');
+  console.log('─'.repeat(50));
 }
 
 function status() {
