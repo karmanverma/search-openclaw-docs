@@ -24,7 +24,7 @@ Use this skill BEFORE searching the web for OpenClaw questions.
 
 ## 3. Custom Trigger Phrases (Optional)
 
-Add to your `openclaw.json` under the skill entry if you want custom triggers:
+Add to your `openclaw.json`:
 
 ```json
 {
@@ -45,31 +45,3 @@ node ~/.openclaw/skills/search-openclaw-docs/scripts/docs-search.js "discord req
 ```
 
 Should return `channels/discord.md` as the best match.
-
----
-
-## Optional: Enable Vector Search
-
-> ⚠️ **SECURITY NOTE:** This feature sends document content and search queries to an external endpoint. Only enable if you trust your embedding server.
-
-By default, the skill uses FTS5 keyword search only (no network calls). For improved semantic search, you can optionally enable embeddings:
-
-```bash
-# 1. Set environment variables
-export OPENCLAW_DOCS_EMBEDDINGS=true
-export EMBED_URL="http://localhost:8090/v1/embeddings"  # Your embedding server
-export EMBED_MODEL="text-embedding-3-small"
-
-# 2. Rebuild index with embeddings
-node ~/.openclaw/skills/search-openclaw-docs/scripts/docs-index.js rebuild
-```
-
-**What gets sent to EMBED_URL:**
-- During indexing: Document summaries and titles
-- During search: Your search queries
-
-**Recommended only for:**
-- Local embedding servers (localhost)
-- Self-hosted APIs you control
-
-If you're unsure, the default FTS5 mode works great for config lookups and is completely offline.

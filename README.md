@@ -1,8 +1,10 @@
 # search-openclaw-docs
 
-📚 OpenClaw agent skill for semantic search across documentation.
+📚 OpenClaw agent skill for fast documentation search.
 
-Returns **file paths to read**, not chunks - find the right doc quickly, then get full context.
+Returns **file paths to read** - find the right doc quickly, then get full context.
+
+**Fully offline** - FTS5 keyword search, no network calls.
 
 ## Install
 
@@ -31,12 +33,6 @@ node scripts/docs-status.js
 
 # Rebuild index (after OpenClaw update)
 node scripts/docs-index.js rebuild
-
-# More results
-node scripts/docs-search.js "providers" --top=5
-
-# JSON output
-node scripts/docs-search.js "heartbeat" --json
 ```
 
 ## Example Output
@@ -48,10 +44,7 @@ node scripts/docs-search.js "heartbeat" --json
    channels/discord.md
    "Discord (Bot API)"
    Keywords: discord, requiremention
-   Score: 0.40
-
-📄 Also relevant:
-   concepts/groups.md (0.32)
+   Score: 0.70
 
 💡 Read with:
    cat /usr/lib/node_modules/openclaw/docs/channels/discord.md
@@ -59,29 +52,10 @@ node scripts/docs-search.js "heartbeat" --json
 
 ## How It Works
 
-1. **FTS5 keyword search** - Fast match on titles, headers, camelCase config keys
-2. **Vector rerank** - Semantic similarity (optional, if embedding server available)
-3. **Hybrid scoring** - 60% vector + 40% keyword
-
-Works great without embeddings - falls back to pure FTS5 automatically.
-
-## Configuration
-
-### Embedding Server (Optional)
-
-```bash
-export EMBED_URL="http://localhost:8090/v1/embeddings"
-export EMBED_MODEL="text-embedding-3-small"
-```
-
-Compatible with any OpenAI-compatible embedding API.
-
-### Index Location
-
-- **Index**: `~/.openclaw/docs-index/openclaw-docs.sqlite`
-- **Docs**: `/usr/lib/node_modules/openclaw/docs/`
-
-Index is built locally from your OpenClaw installation.
+- FTS5 keyword matching on titles, headers, config keys
+- Handles camelCase terms like `requireMention`
+- Porter stemming for flexible matching
+- Index built locally from your OpenClaw version
 
 ## License
 

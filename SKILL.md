@@ -17,9 +17,9 @@ metadata:
 
 # OpenClaw Documentation Search
 
-Fast file-centric search for OpenClaw docs. Returns file paths to read, not chunks.
+Fast file-centric search for OpenClaw docs using FTS5 keyword matching.
 
-**Default mode:** FTS5 keyword search (no network calls, fully offline)
+**Fully offline** - no network calls, no external dependencies.
 
 ## Quick Start
 
@@ -42,7 +42,7 @@ node ~/.openclaw/skills/search-openclaw-docs/scripts/docs-index.js rebuild
 | "Why isn't X working?" | Search → read file → diagnose |
 | "What does Y do?" | Search → read file → explain |
 
-**Don't use for**: Personal memories, preferences, past decisions → use `memory_search` instead.
+**Don't use for**: Personal memories, preferences → use `memory_search` instead.
 
 ## Usage Examples
 
@@ -64,16 +64,15 @@ node scripts/docs-search.js "heartbeat" --json
 
 ```
 🔍 Query: discord only respond when mentioned
-Mode: FTS5 keyword search
 
 🎯 Best match:
    channels/discord.md
    "Discord (Bot API)"
    Keywords: discord, requiremention
-   Score: 0.40
+   Score: 0.70
 
 📄 Also relevant:
-   concepts/groups.md (0.32)
+   concepts/groups.md (0.66)
 
 💡 Read with:
    cat /usr/lib/node_modules/openclaw/docs/channels/discord.md
@@ -81,11 +80,10 @@ Mode: FTS5 keyword search
 
 ## How It Works
 
-**Default (FTS5 only):**
-- Fast keyword matching on titles, headers, config keys
+- FTS5 keyword matching on titles, headers, config keys
 - Handles camelCase terms like `requireMention`
+- Porter stemming for flexible matching
 - No network calls - fully offline
-- Works great for config lookups
 
 ## Index Location
 
@@ -99,10 +97,10 @@ Index is built locally from your OpenClaw version.
 ### No results / wrong results
 
 ```bash
-# 1. Check index exists and is healthy
+# 1. Check index exists
 node scripts/docs-status.js
 
-# 2. Rebuild if stale or missing
+# 2. Rebuild if stale
 node scripts/docs-index.js rebuild
 
 # 3. Try exact config terms (camelCase matters)
@@ -112,46 +110,9 @@ node scripts/docs-search.js "requireMention"
 node scripts/docs-search.js "discord"
 ```
 
-### Index outdated after OpenClaw update
-
-```bash
-node scripts/docs-index.js rebuild
-```
-
----
-
-## Optional: Enable Vector Search
-
-> ⚠️ **SECURITY NOTE:** Enabling embeddings sends document content and queries to your configured `EMBED_URL`. Only enable this if you trust your embedding endpoint (e.g., localhost server, your own API).
-
-For improved semantic search, you can optionally enable vector embeddings:
-
-```bash
-# Enable embeddings (opt-in)
-export OPENCLAW_DOCS_EMBEDDINGS=true
-export EMBED_URL="http://localhost:8090/v1/embeddings"
-export EMBED_MODEL="text-embedding-3-small"
-
-# Rebuild index with embeddings
-node scripts/docs-index.js rebuild
-```
-
-**When enabled:**
-- Document content is sent to `EMBED_URL` during indexing
-- Queries are sent to `EMBED_URL` during search
-- Hybrid scoring: 60% vector + 40% keyword
-
-**Recommended only for:**
-- Local embedding servers (localhost)
-- Self-hosted APIs you control
-- Trusted enterprise endpoints
-
----
-
 ## Integration
 
 ```javascript
-// Use in custom scripts
 const { search } = require('./lib/search');
 const INDEX = process.env.HOME + '/.openclaw/docs-index/openclaw-docs.sqlite';
 
