@@ -16,7 +16,7 @@ clawhub install search-openclaw-docs
 
 ```bash
 cd ~/.openclaw/skills
-git clone https://github.com/k-karman/search-openclaw-docs.git
+git clone https://github.com/karmanverma/search-openclaw-docs.git
 cd search-openclaw-docs
 npm install
 node scripts/docs-index.js rebuild

@@ -4,7 +4,7 @@ description: Semantic search across OpenClaw documentation. Use when users ask a
 metadata:
   openclaw:
     emoji: "📚"
-    homepage: https://github.com/k-karman/search-openclaw-docs
+    homepage: https://github.com/karmanverma/search-openclaw-docs
     requires:
       bins: ["node"]
     install:
