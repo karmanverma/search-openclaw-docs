@@ -1,6 +1,6 @@
 # search-openclaw-docs
 
-📚 Fast semantic search for OpenClaw documentation.
+📚 OpenClaw agent skill for semantic search across documentation.
 
 Returns **file paths to read**, not chunks - find the right doc quickly, then get full context.
 

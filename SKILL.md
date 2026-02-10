@@ -1,6 +1,6 @@
 ---
 name: search-openclaw-docs
-description: Semantic search across OpenClaw documentation. Use when users ask about OpenClaw setup, configuration, troubleshooting, or features. Returns relevant file paths to read.
+description: OpenClaw agent skill for semantic search across OpenClaw documentation. Use when users ask about OpenClaw setup, configuration, troubleshooting, or features. Returns relevant file paths to read.
 metadata:
   openclaw:
     emoji: "📚"

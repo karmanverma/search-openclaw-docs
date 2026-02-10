@@ -1,7 +1,7 @@
 {
   "name": "search-openclaw-docs",
   "version": "2.0.0",
-  "description": "Fast semantic search for OpenClaw documentation - returns file paths to read",
+  "description": "OpenClaw agent skill for semantic search across documentation - returns file paths to read",
   "author": "k-karman",
   "license": "MIT",
   "repository": {
