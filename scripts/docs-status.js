@@ -5,14 +5,12 @@
 
 const fs = require('fs');
 const path = require('path');
-const http = require('http');
 
 const INDEX_DIR = path.join(process.env.HOME, '.openclaw/docs-index');
 const INDEX_PATH = path.join(INDEX_DIR, 'openclaw-docs.sqlite');
 const META_PATH = path.join(INDEX_DIR, 'index-meta.json');
-const DOCS_PATH = '/usr/lib/node_modules/openclaw/docs';
 
-const EMBED_URL = process.env.EMBED_URL || 'http://localhost:8090/v1/embeddings';
+const EMBEDDINGS_ENABLED = process.env.OPENCLAW_DOCS_EMBEDDINGS === 'true';
 
 console.log('📊 OpenClaw Docs Index Status\n');
 
@@ -44,68 +42,38 @@ if (daysSinceIndex > 7) {
   console.log(`\n⚠️  Index is ${daysSinceIndex} days old - consider rebuilding`);
 }
 
-// Check embedding coverage
-let embeddingCoverage = 0;
-try {
-  const Database = require('better-sqlite3');
-  const db = new Database(INDEX_PATH, { readonly: true });
-  const total = db.prepare('SELECT COUNT(*) as c FROM files').get().c;
-  const withEmbed = db.prepare('SELECT COUNT(*) as c FROM files WHERE embedding IS NOT NULL').get().c;
-  embeddingCoverage = Math.round((withEmbed / total) * 100);
-  db.close();
-  
-  console.log(`\nEmbedding coverage: ${withEmbed}/${total} files (${embeddingCoverage}%)`);
-  
-  if (embeddingCoverage === 0) {
-    console.log('   → Using keyword-only search (FTS5)');
-  } else if (embeddingCoverage < 100) {
-    console.log('   → Hybrid search (some files missing embeddings)');
-  } else {
-    console.log('   → Full hybrid search available');
-  }
-} catch (e) {
-  console.log('\n⚠️  Could not check embedding coverage');
+// Search mode
+console.log(`\nSearch mode: ${EMBEDDINGS_ENABLED ? '🔗 Hybrid (FTS5 + Vector)' : '📝 FTS5 keyword search (default)'}`);
+
+if (!EMBEDDINGS_ENABLED) {
+  console.log('   → No network calls, fully offline');
+  console.log('   → Set OPENCLAW_DOCS_EMBEDDINGS=true for vector search');
 }
 
-// Check embedding server
-console.log(`\nEmbedding server: ${EMBED_URL}`);
-
-const checkEmbedServer = () => {
-  return new Promise((resolve) => {
-    try {
-      const url = new URL(EMBED_URL);
-      const req = http.request({
-        hostname: url.hostname,
-        port: url.port || 80,
-        path: url.pathname,
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        timeout: 3000
-      }, (res) => {
-        resolve(res.statusCode < 500);
-      });
-      req.on('error', () => resolve(false));
-      req.on('timeout', () => { req.destroy(); resolve(false); });
-      req.write(JSON.stringify({ input: 'test', model: 'test' }));
-      req.end();
-    } catch {
-      resolve(false);
+// Check embedding coverage if enabled
+if (EMBEDDINGS_ENABLED) {
+  try {
+    const Database = require('better-sqlite3');
+    const db = new Database(INDEX_PATH, { readonly: true });
+    const total = db.prepare('SELECT COUNT(*) as c FROM files').get().c;
+    const withEmbed = db.prepare('SELECT COUNT(*) as c FROM files WHERE embedding IS NOT NULL').get().c;
+    const coverage = Math.round((withEmbed / total) * 100);
+    db.close();
+    
+    console.log(`   Embedding coverage: ${withEmbed}/${total} files (${coverage}%)`);
+    
+    if (coverage === 0) {
+      console.log('   → Rebuild index to add embeddings');
     }
-  });
-};
+  } catch (e) {
+    console.log('   ⚠️  Could not check embedding coverage');
+  }
+}
 
-checkEmbedServer().then(available => {
-  if (available) {
-    console.log('   → Server responding ✓');
-  } else {
-    console.log('   → Server not available (keyword-only mode)');
-  }
-  
-  // Final status
-  console.log('\n' + '─'.repeat(40));
-  if (fs.existsSync(INDEX_PATH) && meta.filesIndexed > 0) {
-    console.log('✅ Index ready');
-  } else {
-    console.log('❌ Index needs rebuild');
-  }
-});
+// Final status
+console.log('\n' + '─'.repeat(40));
+if (fs.existsSync(INDEX_PATH) && meta.filesIndexed > 0) {
+  console.log('✅ Index ready');
+} else {
+  console.log('❌ Index needs rebuild');
+}

@@ -19,6 +19,8 @@ metadata:
 
 Fast file-centric search for OpenClaw docs. Returns file paths to read, not chunks.
 
+**Default mode:** FTS5 keyword search (no network calls, fully offline)
+
 ## Quick Start
 
 ```bash
@@ -62,6 +64,7 @@ node scripts/docs-search.js "heartbeat" --json
 
 ```
 🔍 Query: discord only respond when mentioned
+Mode: FTS5 keyword search
 
 🎯 Best match:
    channels/discord.md
@@ -76,29 +79,20 @@ node scripts/docs-search.js "heartbeat" --json
    cat /usr/lib/node_modules/openclaw/docs/channels/discord.md
 ```
 
-## Configuration
+## How It Works
 
-### Embedding Server (Optional)
+**Default (FTS5 only):**
+- Fast keyword matching on titles, headers, config keys
+- Handles camelCase terms like `requireMention`
+- No network calls - fully offline
+- Works great for config lookups
 
-Vector search improves results but is **not required**. Falls back to keyword-only (FTS5) automatically.
-
-```bash
-# OpenAI-compatible endpoint
-export EMBED_URL="http://localhost:8090/v1/embeddings"
-export EMBED_MODEL="text-embedding-3-small"
-
-# Or use OpenAI directly
-export EMBED_URL="https://api.openai.com/v1/embeddings"
-export EMBED_MODEL="text-embedding-3-small"
-export OPENAI_API_KEY="sk-..."
-```
-
-### Index Location
+## Index Location
 
 - **Index**: `~/.openclaw/docs-index/openclaw-docs.sqlite`
 - **Docs**: `/usr/lib/node_modules/openclaw/docs/`
 
-Index is built locally from your OpenClaw version - not shipped with skill.
+Index is built locally from your OpenClaw version.
 
 ## Troubleshooting
 
@@ -111,22 +105,11 @@ node scripts/docs-status.js
 # 2. Rebuild if stale or missing
 node scripts/docs-index.js rebuild
 
-# 3. Try exact config terms (camelCase matters for keywords)
-node scripts/docs-search.js "requireMention"  # better than "require mention"
+# 3. Try exact config terms (camelCase matters)
+node scripts/docs-search.js "requireMention"
 
 # 4. Try broader terms
-node scripts/docs-search.js "discord"  # instead of "discord bot webhook setup"
-```
-
-### Vector search not working
-
-Falls back to FTS5 automatically - still works, just keyword-only.
-
-```bash
-# Check embedding server (if configured)
-curl -s $EMBED_URL -X POST \
-  -H "Content-Type: application/json" \
-  -d '{"input":"test","model":"'$EMBED_MODEL'"}' | head -c 200
+node scripts/docs-search.js "discord"
 ```
 
 ### Index outdated after OpenClaw update
@@ -135,13 +118,35 @@ curl -s $EMBED_URL -X POST \
 node scripts/docs-index.js rebuild
 ```
 
-## How It Works
+---
 
-1. **FTS5 keyword filter** - Fast match on titles, headers, config keys
-2. **Vector rerank** - Semantic similarity (if embeddings available)
-3. **Hybrid score** - 60% vector + 40% keyword → best results
+## Optional: Enable Vector Search
 
-Indexes 313 files at file level (not chunks) for fast, actionable results.
+> ⚠️ **SECURITY NOTE:** Enabling embeddings sends document content and queries to your configured `EMBED_URL`. Only enable this if you trust your embedding endpoint (e.g., localhost server, your own API).
+
+For improved semantic search, you can optionally enable vector embeddings:
+
+```bash
+# Enable embeddings (opt-in)
+export OPENCLAW_DOCS_EMBEDDINGS=true
+export EMBED_URL="http://localhost:8090/v1/embeddings"
+export EMBED_MODEL="text-embedding-3-small"
+
+# Rebuild index with embeddings
+node scripts/docs-index.js rebuild
+```
+
+**When enabled:**
+- Document content is sent to `EMBED_URL` during indexing
+- Queries are sent to `EMBED_URL` during search
+- Hybrid scoring: 60% vector + 40% keyword
+
+**Recommended only for:**
+- Local embedding servers (localhost)
+- Self-hosted APIs you control
+- Trusted enterprise endpoints
+
+---
 
 ## Integration
 
@@ -152,5 +157,4 @@ const INDEX = process.env.HOME + '/.openclaw/docs-index/openclaw-docs.sqlite';
 
 const results = await search(INDEX, "discord webhook");
 // results[0].path → full path to read
-// results[0].relPath → relative path for display
 ```
