@@ -1,0 +1,22 @@
+{
+  "name": "search-openclaw-docs",
+  "version": "2.0.0",
+  "description": "Fast semantic search for OpenClaw documentation - returns file paths to read",
+  "author": "k-karman",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/k-karman/search-openclaw-docs.git"
+  },
+  "keywords": [
+    "openclaw",
+    "skill",
+    "documentation",
+    "search",
+    "fts5",
+    "sqlite"
+  ],
+  "dependencies": {
+    "better-sqlite3": "^11.0.0"
+  }
+}

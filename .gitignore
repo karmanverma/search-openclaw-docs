@@ -1,0 +1,18 @@
+# Dependencies
+node_modules/
+package-lock.json
+
+# Index files (built locally from user's OpenClaw install)
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
