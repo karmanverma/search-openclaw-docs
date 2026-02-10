@@ -17,40 +17,49 @@ metadata:
 
 # OpenClaw Documentation Search
 
-File-centric retrieval for OpenClaw docs. Finds the RIGHT documentation file(s) quickly using hybrid keyword + vector search.
+Fast file-centric search for OpenClaw docs. Returns file paths to read, not chunks.
 
-## How It Works
+## Quick Start
 
-1. **Keyword filter (FTS5)** - Fast match on titles, headers, config keys
-2. **Vector rerank** - Semantic similarity to pick best matches
-3. **Returns file paths** - Actual files to read, not chunks
-
-## Usage
-
-### Search Docs
 ```bash
-node ~/.openclaw/skills/search-openclaw-docs/scripts/docs-search.js "your query"
-```
-
-### Examples
-```bash
-# Config question
+# Search
 node ~/.openclaw/skills/search-openclaw-docs/scripts/docs-search.js "discord requireMention"
 
-# Troubleshooting
-node ~/.openclaw/skills/search-openclaw-docs/scripts/docs-search.js "webhook not working"
+# Check index health
+node ~/.openclaw/skills/search-openclaw-docs/scripts/docs-status.js
 
-# Feature lookup
-node ~/.openclaw/skills/search-openclaw-docs/scripts/docs-search.js "memory search setup"
-
-# Get more results
-node ~/.openclaw/skills/search-openclaw-docs/scripts/docs-search.js "providers" --top=5
-
-# JSON output (for scripting)
-node ~/.openclaw/skills/search-openclaw-docs/scripts/docs-search.js "heartbeat" --json
+# Rebuild (after OpenClaw update)
+node ~/.openclaw/skills/search-openclaw-docs/scripts/docs-index.js rebuild
 ```
 
-### Output Format
+## When to Use
+
+| User asks... | Action |
+|--------------|--------|
+| "How do I configure X?" | Search → read file → answer |
+| "Why isn't X working?" | Search → read file → diagnose |
+| "What does Y do?" | Search → read file → explain |
+
+**Don't use for**: Personal memories, preferences, past decisions → use `memory_search` instead.
+
+## Usage Examples
+
+```bash
+# Config question
+node scripts/docs-search.js "discord requireMention"
+
+# Troubleshooting  
+node scripts/docs-search.js "webhook not working"
+
+# More results
+node scripts/docs-search.js "providers" --top=5
+
+# JSON output
+node scripts/docs-search.js "heartbeat" --json
+```
+
+## Output Format
+
 ```
 🔍 Query: discord only respond when mentioned
 
@@ -62,63 +71,86 @@ node ~/.openclaw/skills/search-openclaw-docs/scripts/docs-search.js "heartbeat" 
 
 📄 Also relevant:
    concepts/groups.md (0.32)
-      Keywords: requiremention, groups
 
 💡 Read with:
    cat /usr/lib/node_modules/openclaw/docs/channels/discord.md
 ```
 
-### Index Management
+## Configuration
+
+### Embedding Server (Optional)
+
+Vector search improves results but is **not required**. Falls back to keyword-only (FTS5) automatically.
+
 ```bash
-# Check index status
-node ~/.openclaw/skills/search-openclaw-docs/scripts/docs-status.js
+# OpenAI-compatible endpoint
+export EMBED_URL="http://localhost:8090/v1/embeddings"
+export EMBED_MODEL="text-embedding-3-small"
 
-# Rebuild index (after OpenClaw update)
-node ~/.openclaw/skills/search-openclaw-docs/scripts/docs-index.js rebuild
+# Or use OpenAI directly
+export EMBED_URL="https://api.openai.com/v1/embeddings"
+export EMBED_MODEL="text-embedding-3-small"
+export OPENAI_API_KEY="sk-..."
 ```
 
-## When to Use
-
-| Situation | Action |
-|-----------|--------|
-| User asks "How do I configure X?" | Search → read file → answer |
-| User asks "Why isn't X working?" | Search → read file → diagnose |
-| User asks about OpenClaw features | Search → read file → explain |
-| Need config examples | Search → read file → extract |
-
-## Decision Tree
-
-```
-User asks about OpenClaw
-        ↓
-Search docs (this skill)
-        ↓
-Get 1-3 relevant file paths
-        ↓
-Read full file(s) with cat
-        ↓
-Answer from complete context
-```
-
-## Architecture
-
-- **313 files** indexed at file level
-- **FTS5** for fast keyword matching (titles, headers, config keys, camelCase terms)
-- **Vector embeddings** for semantic reranking
-- **Hybrid scoring**: 60% vector + 40% keyword
-
-## Index Location
+### Index Location
 
 - **Index**: `~/.openclaw/docs-index/openclaw-docs.sqlite`
-- **Metadata**: `~/.openclaw/docs-index/index-meta.json`
-- **Docs source**: `/usr/lib/node_modules/openclaw/docs/`
+- **Docs**: `/usr/lib/node_modules/openclaw/docs/`
 
-## vs memory_search
+Index is built locally from your OpenClaw version - not shipped with skill.
 
-| This Skill | memory_search |
-|------------|---------------|
-| OpenClaw docs only | Personal memories |
-| File paths | Line snippets |
-| Config/troubleshooting | Decisions/preferences |
+## Troubleshooting
 
-Never mix docs into memory index!
+### No results / wrong results
+
+```bash
+# 1. Check index exists and is healthy
+node scripts/docs-status.js
+
+# 2. Rebuild if stale or missing
+node scripts/docs-index.js rebuild
+
+# 3. Try exact config terms (camelCase matters for keywords)
+node scripts/docs-search.js "requireMention"  # better than "require mention"
+
+# 4. Try broader terms
+node scripts/docs-search.js "discord"  # instead of "discord bot webhook setup"
+```
+
+### Vector search not working
+
+Falls back to FTS5 automatically - still works, just keyword-only.
+
+```bash
+# Check embedding server (if configured)
+curl -s $EMBED_URL -X POST \
+  -H "Content-Type: application/json" \
+  -d '{"input":"test","model":"'$EMBED_MODEL'"}' | head -c 200
+```
+
+### Index outdated after OpenClaw update
+
+```bash
+node scripts/docs-index.js rebuild
+```
+
+## How It Works
+
+1. **FTS5 keyword filter** - Fast match on titles, headers, config keys
+2. **Vector rerank** - Semantic similarity (if embeddings available)
+3. **Hybrid score** - 60% vector + 40% keyword → best results
+
+Indexes 313 files at file level (not chunks) for fast, actionable results.
+
+## Integration
+
+```javascript
+// Use in custom scripts
+const { search } = require('./lib/search');
+const INDEX = process.env.HOME + '/.openclaw/docs-index/openclaw-docs.sqlite';
+
+const results = await search(INDEX, "discord webhook");
+// results[0].path → full path to read
+// results[0].relPath → relative path for display
+```
