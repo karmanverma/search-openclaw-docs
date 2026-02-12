@@ -1,6 +1,6 @@
 ---
 name: search-openclaw-docs
-description: OpenClaw agent skill for semantic search across OpenClaw documentation. Use when users ask about OpenClaw setup, configuration, troubleshooting, or features. Returns relevant file paths to read.
+description: MANDATORY before any openclaw.json changes. Prevents config breakage via embedded anti-patterns and correct patterns. Use when configuring OpenClaw (bindings, channels, sessions, cron, heartbeat) or troubleshooting config issues.
 metadata:
   openclaw:
     emoji: "📚"
@@ -15,13 +15,86 @@ metadata:
     postInstall: "node scripts/docs-index.js rebuild"
 ---
 
-# OpenClaw Documentation Search
+# OpenClaw Documentation Search + Config Patterns
 
-Fast file-centric search for OpenClaw docs using FTS5 keyword matching.
+**MANDATORY before changing `openclaw.json`** - Embedded patterns prevent silent config breakage.
 
-**Fully offline** - no network calls, no external dependencies.
+**Two modes:**
+1. **Embedded references** (instant) - Common config patterns with anti-patterns
+2. **Doc search** (fallback) - Full OpenClaw documentation index
 
-## Quick Start
+---
+
+## 🚨 CRITICAL: Read AGENTS.md First
+
+Before using this skill:
+
+```bash
+cat ~/.openclaw/skills/search-openclaw-docs/AGENTS.md
+```
+
+**Contains:**
+- Mandatory workflow for config changes
+- Decision tree (which reference to read)
+- Critical anti-patterns overview
+- When NOT to use this skill
+
+---
+
+## Decision Tree
+
+| Task | Action |
+|------|--------|
+| Adding/removing agent bindings | Read `references/config-bindings.md` |
+| Enabling/disabling channels | Read `references/config-channel-management.md` |
+| Session reset tuning | Read `references/config-session-reset.md` |
+| Heartbeat configuration | Read `references/config-heartbeat.md` |
+| Cron job setup | Read `references/config-cron.md` |
+| Config broke after patch | Read `references/troubleshooting-config-breaks.md` |
+| Best practices overview | Read `references/best-practices-config.md` |
+| Migration (2026.2.9) | Read `references/migration-2026-2-9.md` |
+| Other config questions | Search docs (see below) |
+
+---
+
+## Embedded References (8 files)
+
+**Config Patterns:**
+- `config-bindings.md` - Agent routing (CRITICAL)
+- `config-channel-management.md` - Enable/disable channels (CRITICAL)
+- `config-session-reset.md` - Session lifetime policies (HIGH)
+- `config-heartbeat.md` - Proactive monitoring (MEDIUM)
+- `config-cron.md` - Scheduled tasks (MEDIUM)
+
+**Support:**
+- `troubleshooting-config-breaks.md` - Fix broken configs (CRITICAL)
+- `best-practices-config.md` - Safe patterns (HIGH)
+- `migration-2026-2-9.md` - Version updates (MEDIUM)
+
+**Each reference contains:**
+- ✅ Correct pattern
+- ❌ Common anti-patterns
+- Why it breaks
+- Examples
+
+---
+
+## When to Use
+
+| Scenario | Action |
+|----------|--------|
+| Before editing `openclaw.json` | ✅ Read relevant reference first |
+| Config changes not working | ✅ Read troubleshooting reference |
+| Learning OpenClaw config | ✅ Read best practices reference |
+| Personal memory/context | ❌ Use `memory_search` instead |
+| Supabase/database work | ❌ Use `supabase-postgres-best-practices` |
+| Next.js code patterns | ❌ Use `next-best-practices` |
+
+---
+
+## Doc Search (Fallback)
+
+For topics not in references, search full docs:
 
 ```bash
 # Search
@@ -33,16 +106,6 @@ node ~/.openclaw/skills/search-openclaw-docs/scripts/docs-status.js
 # Rebuild (after OpenClaw update)
 node ~/.openclaw/skills/search-openclaw-docs/scripts/docs-index.js rebuild
 ```
-
-## When to Use
-
-| User asks... | Action |
-|--------------|--------|
-| "How do I configure X?" | Search → read file → answer |
-| "Why isn't X working?" | Search → read file → diagnose |
-| "What does Y do?" | Search → read file → explain |
-
-**Don't use for**: Personal memories, preferences → use `memory_search` instead.
 
 ## Usage Examples
 
